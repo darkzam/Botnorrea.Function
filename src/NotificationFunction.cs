@@ -34,7 +34,9 @@ namespace Botnorrea.Functions
                 var json = JsonConvert.SerializeObject(new { message = requestBody });
                 var content = new StringContent(json);
 
-                await Client.PostAsync(config["Botnorrea.Webhook"], content);
+                var response = await Client.PostAsync(config["Botnorrea.Webhook"], content);
+
+                log.LogDebug("Response From Botnorrea: ", response);
 
                 return new OkResult();
             }
