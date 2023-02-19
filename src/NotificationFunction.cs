@@ -40,6 +40,8 @@ namespace Botnorrea.Functions
             }
             catch(Exception ex)
             {
+                log.LogError(ex.Message);
+
                 return new BadRequestObjectResult(ex.Message);
             }
         }
