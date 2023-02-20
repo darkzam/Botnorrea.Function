@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -29,21 +30,40 @@ namespace Botnorrea.Functions
                                                  .AddEnvironmentVariables()
                                                  .Build();
 
-                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                if (!req.Headers.ContainsKey("X-GitHub-Event"))
+                {
+                    return new OkResult();
+                }
 
-                var json = JsonConvert.SerializeObject(new { message = requestBody });
+                if (req.Headers["X-GitHub-Event"].ToString() != "pull_request")
+                {
+                    return new OkResult();
+                }
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                dynamic objectBody = JObject.Parse(requestBody);
+
+                var pullRequestMessageObject = new
+                {
+                    Action = objectBody?.pull_request?.action,
+                    Url = objectBody?.pull_request?.url,
+                    Title = objectBody?.pull_request?.title,
+                    Merged = objectBody?.pull_request?.merged,
+                    User = objectBody?.pull_request?.user?.login
+                };
+
+                var pullRequestMessageStr = JsonConvert.SerializeObject(pullRequestMessageObject);
+
+                var json = JsonConvert.SerializeObject(new { message = pullRequestMessageStr });
                 var content = new StringContent(json);
 
-                var response = await Client.PostAsync(config["Botnorrea.Webhook"], content);
-
-                log.LogDebug("Response From Botnorrea: ", response);
+                await Client.PostAsync(config["Botnorrea.Webhook"], content);
 
                 return new OkResult();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 log.LogError(ex.Message);
-
                 return new BadRequestObjectResult(ex.Message);
             }
         }
