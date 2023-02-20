@@ -49,10 +49,13 @@ namespace Botnorrea.Functions
                     Url = objectBody?.pull_request?.html_url,
                     Title = objectBody?.pull_request?.title,
                     Merged = objectBody?.pull_request?.merged,
-                    User = objectBody?.pull_request?.user?.login
+                    User = (string)objectBody?.pull_request?.user?.login
                 };
 
-                var pullRequestMessageStr = JsonConvert.SerializeObject(pullRequestMessageObject);
+                string name = new string(pullRequestMessageObject.User.ToCharArray());
+                string formattedName = char.ToUpper(name[0]) + name.Substring(1);
+
+                var pullRequestMessageStr = $"{formattedName} has {pullRequestMessageObject.Action} a pull request: {pullRequestMessageObject.Url}";
 
                 var json = JsonConvert.SerializeObject(new { message = pullRequestMessageStr });
                 var content = new StringContent(json);
