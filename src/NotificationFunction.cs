@@ -45,8 +45,8 @@ namespace Botnorrea.Functions
 
                 var pullRequestMessageObject = new
                 {
-                    Action = objectBody?.pull_request?.action,
-                    Url = objectBody?.pull_request?.url,
+                    Action = objectBody?.action,
+                    Url = objectBody?.pull_request?.html_url,
                     Title = objectBody?.pull_request?.title,
                     Merged = objectBody?.pull_request?.merged,
                     User = objectBody?.pull_request?.user?.login
