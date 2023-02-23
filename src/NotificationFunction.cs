@@ -1,3 +1,4 @@
+using Botnorrea.Functions.Strategies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -16,6 +18,7 @@ namespace Botnorrea.Functions
     public static class NotificationFunction
     {
         private static HttpClient Client = new HttpClient();
+        private static Dictionary<string, GetMessageStrategy> RegisteredEvents = new Dictionary<string, GetMessageStrategy>() { { "pull_request", new PullRequestGetMessageStrategy() } };
 
         [FunctionName("NotificationFunction")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
@@ -35,29 +38,25 @@ namespace Botnorrea.Functions
                     return new OkResult();
                 }
 
-                if (req.Headers["X-GitHub-Event"].ToString() != "pull_request")
+                var eventName = req.Headers["X-GitHub-Event"].ToString();
+
+                if (!RegisteredEvents.ContainsKey(eventName))
                 {
                     return new OkResult();
                 }
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                dynamic objectBody = JObject.Parse(requestBody);
+                dynamic payload = JObject.Parse(requestBody);
 
-                var pullRequestMessageObject = new
+                if (eventName == "workflow_run"
+                    && payload.action.ToString() != "completed")
                 {
-                    Action = objectBody?.action,
-                    Url = objectBody?.pull_request?.html_url,
-                    Title = objectBody?.pull_request?.title,
-                    Merged = objectBody?.pull_request?.merged,
-                    User = (string)objectBody?.pull_request?.user?.login
-                };
+                    return new OkResult();
+                }
 
-                string name = new string(pullRequestMessageObject.User.ToCharArray());
-                string formattedName = char.ToUpper(name[0]) + name.Substring(1);
+                var message = RegisteredEvents[eventName].GetMessage(payload);
 
-                var pullRequestMessageStr = $"{formattedName} has {pullRequestMessageObject.Action} a pull request: {pullRequestMessageObject.Url}";
-
-                var json = JsonConvert.SerializeObject(new { message = pullRequestMessageStr });
+                var json = JsonConvert.SerializeObject(new { message = message });
                 var content = new StringContent(json);
 
                 await Client.PostAsync(config["Botnorrea.Webhook"], content);
