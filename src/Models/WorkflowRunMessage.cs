@@ -7,8 +7,11 @@ namespace Botnorrea.Functions.Models
         public string Status { get; set; }
         public string DebtManagerUrl { get; set; }
 
-        public WorkflowRunMessage(string action, string url, string username, string title) : base(action, url, username, title)
-        { }
+        public WorkflowRunMessage(string action, string url, string username, string title, string status, string debtManagerUrl) : base(action, url, username, title)
+        {
+            Status = status;
+            DebtManagerUrl = debtManagerUrl;
+        }
 
         public override string Initialize()
         {

@@ -18,7 +18,6 @@ namespace Botnorrea.Functions
     public static class NotificationFunction
     {
         private static HttpClient Client = new HttpClient();
-        private static Dictionary<string, GetMessageStrategy> RegisteredEvents = new Dictionary<string, GetMessageStrategy>() { { "pull_request", new PullRequestGetMessageStrategy() } };
 
         [FunctionName("NotificationFunction")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
@@ -33,6 +32,9 @@ namespace Botnorrea.Functions
                                                  .AddEnvironmentVariables()
                                                  .Build();
 
+                var registeredEvents = new Dictionary<string, GetMessageStrategy>() { { "pull_request", new PullRequestGetMessageStrategy() },
+                                                                                      { "workflow_run", new WorkflowRunGetMessageStrategy(config["DebtManager.Url"])} };
+
                 if (!req.Headers.ContainsKey("X-GitHub-Event"))
                 {
                     return new OkResult();
@@ -40,7 +42,7 @@ namespace Botnorrea.Functions
 
                 var eventName = req.Headers["X-GitHub-Event"].ToString();
 
-                if (!RegisteredEvents.ContainsKey(eventName))
+                if (!registeredEvents.ContainsKey(eventName))
                 {
                     return new OkResult();
                 }
@@ -49,12 +51,13 @@ namespace Botnorrea.Functions
                 dynamic payload = JObject.Parse(requestBody);
 
                 if (eventName == "workflow_run"
-                    && payload.action.ToString() != "completed")
+                    && (payload?.workflow_run?.name.ToString() != config["Workflow.Name"]
+                        || payload?.action.ToString() != "completed"))
                 {
                     return new OkResult();
                 }
 
-                var message = RegisteredEvents[eventName].GetMessage(payload);
+                var message = registeredEvents[eventName].GetMessage(payload);
 
                 var json = JsonConvert.SerializeObject(new { message = message });
                 var content = new StringContent(json);
