@@ -16,7 +16,7 @@ namespace Botnorrea.Functions.Strategies
                                                  payload?.workflow_run?.html_url.ToString(),
                                                  payload?.workflow_run?.actor?.login.ToString(),
                                                  payload?.workflow_run?.name.ToString(),
-                                                 payload?.workflow_run?.status.ToString(),
+                                                 payload?.workflow_run?.conclusion.ToString(),
                                                  DebtManagerUrl);
 
             return message.Initialize();
