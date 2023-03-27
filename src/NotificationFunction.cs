@@ -33,7 +33,7 @@ namespace Botnorrea.Functions
                                                  .Build();
 
                 var registeredEvents = new Dictionary<string, GetMessageStrategy>() { { "pull_request", new PullRequestGetMessageStrategy() },
-                                                                                      { "workflow_run", new WorkflowRunGetMessageStrategy(config["DebtManager.Url"])} };
+                                                                                      { "workflow_run", new WorkflowRunGetMessageStrategy(config["DebtManager.Swagger.Url"])} };
 
                 if (!req.Headers.ContainsKey("X-GitHub-Event"))
                 {
