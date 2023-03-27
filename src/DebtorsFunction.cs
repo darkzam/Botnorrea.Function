@@ -17,7 +17,7 @@ namespace Botnorrea.Functions
         private static HttpClient Client = new HttpClient();
 
         [FunctionName("DebtorsFunction")]
-        public static async Task Run([TimerTrigger("0 0 * * * *")] TimerInfo myTimer,
+        public static async Task Run([TimerTrigger("0 0 14 * * *")] TimerInfo myTimer,
                                     ILogger log,
                                     ExecutionContext context)
         {
