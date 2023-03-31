@@ -43,6 +43,12 @@ namespace Botnorrea.Functions
                 dynamic payload = JArray.Parse(requestBody);
 
                 var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine("DebtManager Reports:");
+
+                if (payload.Count == 0)
+                {
+                    messageBuilder.AppendLine("No Pending Debts <3 :clap");
+                }
 
                 foreach (var debt in payload)
                 {
